@@ -85,16 +85,18 @@ def linear_cka(X, Y):
     선형 CKA. X:[N, d1], Y:[N, d2]  (N=샘플 수).
     반환: 0~1 스칼라 (1=매우 유사).
     HSIC 기반, 특징 차원이 달라도 됨.
+
+    Gram 행렬([N,N]) 방식으로 계산 — feature 차원 d가 수십만이어도
+    [d,d] 행렬을 만들지 않아 메모리 안전. ||X^T Y||_F^2 = <XX^T, YY^T> 항등식
+    이용, 값은 [d,d] 방식과 동일하나 비용은 O(d^2) → O(N^2).
     """
     X = X - X.mean(0, keepdim=True)
     Y = Y - Y.mean(0, keepdim=True)
-    # ||X^T Y||_F^2 / ( ||X^T X||_F * ||Y^T Y||_F )
-    xty = X.t() @ Y
-    xtx = X.t() @ X
-    yty = Y.t() @ Y
-    hsic_xy = (xty ** 2).sum()
-    hsic_xx = (xtx ** 2).sum().sqrt()
-    hsic_yy = (yty ** 2).sum().sqrt()
+    Kx = X @ X.t()   # [N, N]
+    Ky = Y @ Y.t()   # [N, N]
+    hsic_xy = (Kx * Ky).sum()
+    hsic_xx = (Kx * Kx).sum().sqrt()
+    hsic_yy = (Ky * Ky).sum().sqrt()
     return (hsic_xy / (hsic_xx * hsic_yy + 1e-12)).item()
 
 
